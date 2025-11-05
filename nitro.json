@@ -1,0 +1,17 @@
+{
+  "cxxNamespace": ["ttlocknitro"],
+  "ios": {
+    "iosModuleName": "TtlockNitro"
+  },
+  "android": {
+    "androidNamespace": ["ttlocknitro"],
+    "androidCxxLibName": "ttlocknitro"
+  },
+  "autolinking": {
+    "TtlockNitro": {
+      "swift": "TtlockNitro",
+      "kotlin": "TtlockNitro"
+    }
+  },
+  "ignorePaths": ["node_modules"]
+}
