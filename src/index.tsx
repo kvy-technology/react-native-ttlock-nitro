@@ -1,9 +1,17 @@
-import { NitroModules } from 'react-native-nitro-modules';
-import type { TtlockNitro } from './TtlockNitro.nitro';
+// Re-export all core functions
+export * from './core';
 
-const TtlockNitroHybridObject =
-  NitroModules.createHybridObject<TtlockNitro>('TtlockNitro');
+// Export types
+export * from './types';
 
-export function multiply(a: number, b: number): number {
-  return TtlockNitroHybridObject.multiply(a, b);
-}
+// Export Nitro types
+export type { TtlockNitro } from './TtlockNitro.nitro';
+
+// Re-export event names for convenience
+export {
+  TTLockEvent,
+  GatewayEvent,
+  TtRemoteKeyEvent,
+  TtDoorSensorEvent,
+  WirelessKeypadEvent,
+} from './types';
