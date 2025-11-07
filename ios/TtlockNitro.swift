@@ -34,8 +34,6 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // Helper to send events
     private func sendEvent(_ eventName: String, body: Any?) {
-
-
         // Notify registered listeners
         if let eventListeners = listeners[eventName] {
             let data = body as? AnyMap

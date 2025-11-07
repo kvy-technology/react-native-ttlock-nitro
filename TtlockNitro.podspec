@@ -22,6 +22,7 @@ Pod::Spec.new do |s|
 
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
+  s.dependency 'TTLock', '3.5.4'
 
   load 'nitrogen/generated/ios/TtlockNitro+autolinking.rb'
   add_nitrogen_files(s)
