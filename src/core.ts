@@ -1,3 +1,4 @@
+import { NativeEventEmitter, NativeModules } from 'react-native';
 import { NitroModules } from 'react-native-nitro-modules';
 import type { TtlockNitro } from './TtlockNitro.nitro';
 import type {
@@ -6,6 +7,17 @@ import type {
   DeviceSystemModal,
   WifiLockServerInfo,
   CycleDateParam,
+  NumberStringPair,
+  NumberNumberPair,
+  NumberNumberNumberTriple,
+  NumberBooleanPair,
+  StringNumberPair,
+  ScanLockModal,
+  ScanGatewayModal,
+  ScanWifiModal,
+  ScanRemoteKeyModal,
+  ScanDoorSensorModal,
+  ScanWirelessKeypadModal,
 } from './types';
 import {
   ConnectState,
@@ -20,10 +32,23 @@ import {
   LiftWorkMode,
   BluetoothState,
   LockFunction,
+  TTLockEvent,
+  GatewayEvent,
+  TtRemoteKeyEvent,
+  TtDoorSensorEvent,
+  WirelessKeypadEvent,
 } from './types';
 
 const TtlockNitroHybridObject =
   NitroModules.createHybridObject<TtlockNitro>('TtlockNitro');
+
+// Use NativeEventEmitter with the native module for event data
+// The native module name is "Ttlock" as defined in the native code
+const ttLockModule = NativeModules.Ttlock;
+const ttLockEventEmitter = new NativeEventEmitter(ttLockModule);
+
+// Subscription map to track subscriptions
+const subscriptionMap = new Map<string, any>();
 
 // Helper function to convert callback to promise
 function promisify<T>(
@@ -56,12 +81,32 @@ function promisifyVoid(
 }
 
 // Wireless Keypad
-export function startScanWirelessKeypad(): void {
+export function startScanWirelessKeypad(
+  callback?: (scanModal: ScanWirelessKeypadModal) => void
+): void {
+  const eventName = WirelessKeypadEvent.ScanWirelessKeypad;
+  let subscription = subscriptionMap.get(eventName);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  if (callback) {
+    subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+      callback(data as ScanWirelessKeypadModal);
+    });
+    subscriptionMap.set(eventName, subscription);
+  }
   TtlockNitroHybridObject.startScanWirelessKeypad();
 }
 
 export function stopScanWirelessKeypad(): void {
   TtlockNitroHybridObject.stopScanWirelessKeypad();
+  const subscription = subscriptionMap.get(
+    WirelessKeypadEvent.ScanWirelessKeypad
+  );
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  subscriptionMap.delete(WirelessKeypadEvent.ScanWirelessKeypad);
 }
 
 export function initWirelessKeypad(
@@ -72,19 +117,37 @@ export function initWirelessKeypad(
     TtlockNitroHybridObject.initWirelessKeypad(
       keypadMac,
       lockMac,
-      resolve,
+      (data: NumberStringPair) => resolve([data.first, data.second]),
       reject
     );
   });
 }
 
 // Door Sensor
-export function startScanDoorSensor(): void {
+export function startScanDoorSensor(
+  callback?: (scanModal: ScanDoorSensorModal) => void
+): void {
+  const eventName = TtDoorSensorEvent.ScanDoorSensor;
+  let subscription = subscriptionMap.get(eventName);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  if (callback) {
+    subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+      callback(data as ScanDoorSensorModal);
+    });
+    subscriptionMap.set(eventName, subscription);
+  }
   TtlockNitroHybridObject.startScanDoorSensor();
 }
 
 export function stopScanDoorSensor(): void {
   TtlockNitroHybridObject.stopScanDoorSensor();
+  const subscription = subscriptionMap.get(TtDoorSensorEvent.ScanDoorSensor);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  subscriptionMap.delete(TtDoorSensorEvent.ScanDoorSensor);
 }
 
 export function initDoorSensor(
@@ -95,19 +158,37 @@ export function initDoorSensor(
     TtlockNitroHybridObject.initDoorSensor(
       doorSensorMac,
       lockData,
-      resolve,
+      (data: NumberStringPair) => resolve([data.first, data.second]),
       reject
     );
   });
 }
 
 // Remote Key
-export function startScanRemoteKey(): void {
+export function startScanRemoteKey(
+  callback?: (scanModal: ScanRemoteKeyModal) => void
+): void {
+  const eventName = TtRemoteKeyEvent.ScanRemoteKey;
+  let subscription = subscriptionMap.get(eventName);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  if (callback) {
+    subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+      callback(data as ScanRemoteKeyModal);
+    });
+    subscriptionMap.set(eventName, subscription);
+  }
   TtlockNitroHybridObject.startScanRemoteKey();
 }
 
 export function stopScanRemoteKey(): void {
   TtlockNitroHybridObject.stopScanRemoteKey();
+  const subscription = subscriptionMap.get(TtRemoteKeyEvent.ScanRemoteKey);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  subscriptionMap.delete(TtRemoteKeyEvent.ScanRemoteKey);
 }
 
 export function initRemoteKey(
@@ -115,7 +196,12 @@ export function initRemoteKey(
   lockData: string
 ): Promise<[number, string]> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.initRemoteKey(remoteMac, lockData, resolve, reject);
+    TtlockNitroHybridObject.initRemoteKey(
+      remoteMac,
+      lockData,
+      (data: NumberStringPair) => resolve([data.first, data.second]),
+      reject
+    );
   });
 }
 
@@ -128,12 +214,30 @@ export function getRemoteKeySystemInfo(
 }
 
 // Gateway
-export function startScanGateway(): void {
+export function startScanGateway(
+  callback?: (scanGatewayModal: ScanGatewayModal) => void
+): void {
+  const eventName = GatewayEvent.ScanGateway;
+  let subscription = subscriptionMap.get(eventName);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  if (callback) {
+    subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+      callback(data as ScanGatewayModal);
+    });
+    subscriptionMap.set(eventName, subscription);
+  }
   TtlockNitroHybridObject.startScanGateway();
 }
 
 export function stopScanGateway(): void {
   TtlockNitroHybridObject.stopScanGateway();
+  const subscription = subscriptionMap.get(GatewayEvent.ScanGateway);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  subscriptionMap.delete(GatewayEvent.ScanGateway);
 }
 
 export function connectGateway(mac: string): Promise<ConnectState> {
@@ -149,27 +253,69 @@ export function connectGateway(mac: string): Promise<ConnectState> {
   });
 }
 
-export function getNearbyWifi(): Promise<void> {
-  return promisifyVoid((resolve) => {
-    TtlockNitroHybridObject.getNearbyWifi(resolve);
+export function getNearbyWifi(
+  progress?: (scanWifiModalList: ScanWifiModal[]) => void,
+  finish?: () => void,
+  fail?: (errorCode: number, description: string) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const eventName = GatewayEvent.ScanWifi;
+    let subscription: any;
+    if (progress) {
+      subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+        progress(data as ScanWifiModal[]);
+      });
+    }
+    TtlockNitroHybridObject.getNearbyWifi((state: number) => {
+      if (subscription) {
+        subscription.remove();
+      }
+      if (state === 0) {
+        if (finish) finish();
+        resolve();
+      } else {
+        if (fail) fail(state, 'Scan WiFi failed');
+        reject({ errorCode: state, description: 'Scan WiFi failed' });
+      }
+    });
   });
 }
 
 export function initGateway(
   params: InitGatewayParam
 ): Promise<InitGatewayModal> {
-  return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.initGateway(params, resolve, reject);
+  return new Promise((resolve, reject) => {
+    TtlockNitroHybridObject.initGateway(params, resolve, (errorCode: number) =>
+      reject({ errorCode, description: '' })
+    );
   });
 }
 
 // Lock Operations
-export function startScan(): void {
+export function startScan(
+  callback?: (scanLockModal: ScanLockModal) => void
+): void {
+  const eventName = TTLockEvent.ScanLock;
+  let subscription = subscriptionMap.get(eventName);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  if (callback) {
+    subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+      callback(data as ScanLockModal);
+    });
+    subscriptionMap.set(eventName, subscription);
+  }
   TtlockNitroHybridObject.startScan();
 }
 
 export function stopScan(): void {
   TtlockNitroHybridObject.stopScan();
+  const subscription = subscriptionMap.get(TTLockEvent.ScanLock);
+  if (subscription !== undefined) {
+    subscription.remove();
+  }
+  subscriptionMap.delete(TTLockEvent.ScanLock);
 }
 
 export function initLock(params: {
@@ -181,9 +327,7 @@ export function initLock(params: {
   });
 }
 
-export function getLockVersionWithLockMac(
-  lockMac: string
-): Promise<string> {
+export function getLockVersionWithLockMac(lockMac: string): Promise<string> {
   return promisify((resolve, reject) => {
     TtlockNitroHybridObject.getLockVersionWithLockMac(lockMac, resolve, reject);
   });
@@ -199,7 +343,7 @@ export function getAccessoryElectricQuantity(
       accessoryType,
       accessoryMac,
       lockData,
-      resolve,
+      (data: NumberNumberPair) => resolve([data.first, data.second]),
       reject
     );
   });
@@ -222,7 +366,13 @@ export function controlLock(
   lockData: string
 ): Promise<[number, number, number]> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.controlLock(control, lockData, resolve, reject);
+    TtlockNitroHybridObject.controlLock(
+      control,
+      lockData,
+      (data: NumberNumberNumberTriple) =>
+        resolve([data.first, data.second, data.third]),
+      reject
+    );
   });
 }
 
@@ -305,15 +455,19 @@ export function resetPasscode(lockData: string): Promise<string> {
 // Lock Status
 export function getLockSwitchState(lockData: string): Promise<LockState> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getLockSwitchState(lockData, (state: number) => {
-      const states = [
-        LockState.Locked,
-        LockState.Unlock,
-        LockState.Unknown,
-        LockState.CarOnLock,
-      ];
-      resolve(states[state] ?? LockState.Unknown);
-    }, reject);
+    TtlockNitroHybridObject.getLockSwitchState(
+      lockData,
+      (state: number) => {
+        const states = [
+          LockState.Locked,
+          LockState.Unlock,
+          LockState.Unknown,
+          LockState.CarOnLock,
+        ];
+        resolve(states[state] ?? LockState.Unknown);
+      },
+      reject
+    );
   });
 }
 
@@ -322,16 +476,32 @@ export function addCard(
   cycleList: CycleDateParam[] | null,
   startDate: number,
   endDate: number,
-  lockData: string
+  lockData: string,
+  progress?: () => void
 ): Promise<string> {
   return promisify((resolve, reject) => {
+    const eventName = TTLockEvent.AddCardProgress;
+    let subscription: any;
+    if (progress) {
+      subscription = ttLockEventEmitter.addListener(eventName, progress);
+    }
     TtlockNitroHybridObject.addCard(
       cycleList,
       startDate,
       endDate,
       lockData,
-      resolve,
-      reject
+      (cardNumber: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        resolve(cardNumber);
+      },
+      (errorCode: number, description: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        reject(errorCode, description);
+      }
     );
   });
 }
@@ -396,16 +566,37 @@ export function addFingerprint(
   cycleList: CycleDateParam[] | null,
   startDate: number,
   endDate: number,
-  lockData: string
+  lockData: string,
+  progress?: (currentCount: number, totalCount: number) => void
 ): Promise<string> {
   return promisify((resolve, reject) => {
+    const eventName = TTLockEvent.AddFingerprintProgress;
+    let subscription: any;
+    if (progress) {
+      subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+        const dataArray = data as number[];
+        if (dataArray && dataArray.length >= 2) {
+          progress(dataArray[0] ?? 0, dataArray[1] ?? 0);
+        }
+      });
+    }
     TtlockNitroHybridObject.addFingerprint(
       cycleList,
       startDate,
       endDate,
       lockData,
-      resolve,
-      reject
+      (fingerprintNumber: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        resolve(fingerprintNumber);
+      },
+      (errorCode: number, description: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        reject(errorCode, description);
+      }
     );
   });
 }
@@ -477,9 +668,13 @@ export function setLockTime(
 
 export function getLockTime(lockData: string): Promise<number> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getLockTime(lockData, (timestamp: string) => {
-      resolve(Number(timestamp));
-    }, reject);
+    TtlockNitroHybridObject.getLockTime(
+      lockData,
+      (timestamp: string) => {
+        resolve(Number(timestamp));
+      },
+      reject
+    );
   });
 }
 
@@ -490,9 +685,7 @@ export function getLockSystem(lockData: string): Promise<DeviceSystemModal> {
   });
 }
 
-export function getLockElectricQuantity(
-  lockData: string
-): Promise<number> {
+export function getLockElectricQuantity(lockData: string): Promise<number> {
   return promisify((resolve, reject) => {
     TtlockNitroHybridObject.getLockElectricQuantity(lockData, resolve, reject);
   });
@@ -504,7 +697,12 @@ export function getLockOperationRecord(
   lockData: string
 ): Promise<string> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getLockOperationRecord(type, lockData, resolve, reject);
+    TtlockNitroHybridObject.getLockOperationRecord(
+      type,
+      lockData,
+      resolve,
+      reject
+    );
   });
 }
 
@@ -515,7 +713,8 @@ export function getLockAutomaticLockingPeriodicTime(
   return promisify((resolve, reject) => {
     TtlockNitroHybridObject.getLockAutomaticLockingPeriodicTime(
       lockData,
-      resolve,
+      (data: NumberNumberNumberTriple) =>
+        resolve([data.first, data.second, data.third]),
       reject
     );
   });
@@ -568,7 +767,12 @@ export function getLockConfig(
   lockData: string
 ): Promise<[number, boolean]> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getLockConfig(config, lockData, resolve, reject);
+    TtlockNitroHybridObject.getLockConfig(
+      config,
+      lockData,
+      (data: NumberBooleanPair) => resolve([data.first, data.second]),
+      reject
+    );
   });
 }
 
@@ -578,7 +782,13 @@ export function setLockConfig(
   lockData: string
 ): Promise<void> {
   return promisifyVoid((resolve, reject) => {
-    TtlockNitroHybridObject.setLockConfig(config, isOn, lockData, resolve, reject);
+    TtlockNitroHybridObject.setLockConfig(
+      config,
+      isOn,
+      lockData,
+      resolve,
+      reject
+    );
   });
 }
 
@@ -597,13 +807,15 @@ export function setLockSoundVolume(
   });
 }
 
-export function getLockSoundVolume(
-  lockData: string
-): Promise<LockSoundVolume> {
+export function getLockSoundVolume(lockData: string): Promise<LockSoundVolume> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getLockSoundVolume(lockData, (value: number) => {
-      resolve(value as LockSoundVolume);
-    }, reject);
+    TtlockNitroHybridObject.getLockSoundVolume(
+      lockData,
+      (value: number) => {
+        resolve(value as LockSoundVolume);
+      },
+      reject
+    );
   });
 }
 
@@ -612,14 +824,18 @@ export function getUnlockDirection(
   lockData: string
 ): Promise<LockUnlockDirection> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getUnlockDirection(lockData, (direction: number) => {
-      const directions = [
-        LockUnlockDirection.Unknown,
-        LockUnlockDirection.Left,
-        LockUnlockDirection.Right,
-      ];
-      resolve(directions[direction] ?? LockUnlockDirection.Unknown);
-    }, reject);
+    TtlockNitroHybridObject.getUnlockDirection(
+      lockData,
+      (direction: number) => {
+        const directions = [
+          LockUnlockDirection.Unknown,
+          LockUnlockDirection.Left,
+          LockUnlockDirection.Right,
+        ];
+        resolve(directions[direction] ?? LockUnlockDirection.Unknown);
+      },
+      reject
+    );
   });
 }
 
@@ -732,7 +948,12 @@ export function deleteRemoteKey(
   lockData: string
 ): Promise<void> {
   return promisifyVoid((resolve, reject) => {
-    TtlockNitroHybridObject.deleteRemoteKey(remoteKeyMac, lockData, resolve, reject);
+    TtlockNitroHybridObject.deleteRemoteKey(
+      remoteKeyMac,
+      lockData,
+      resolve,
+      reject
+    );
   });
 }
 
@@ -748,7 +969,12 @@ export function addDoorSensor(
   lockData: string
 ): Promise<void> {
   return promisifyVoid((resolve, reject) => {
-    TtlockNitroHybridObject.addDoorSensor(doorSensorMac, lockData, resolve, reject);
+    TtlockNitroHybridObject.addDoorSensor(
+      doorSensorMac,
+      lockData,
+      resolve,
+      reject
+    );
   });
 }
 
@@ -763,16 +989,42 @@ export function setDoorSensorAlertTime(
   lockData: string
 ): Promise<void> {
   return promisifyVoid((resolve, reject) => {
-    TtlockNitroHybridObject.setDoorSensorAlertTime(time, lockData, resolve, reject);
+    TtlockNitroHybridObject.setDoorSensorAlertTime(
+      time,
+      lockData,
+      resolve,
+      reject
+    );
   });
 }
 
 // Wifi Operations
-export function scanWifi(lockData: string): Promise<void> {
+export function scanWifi(
+  lockData: string,
+  callback?: (isFinished: boolean, wifiList: ScanWifiModal[]) => void,
+  fail?: (errorCode: number, description: string) => void
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    TtlockNitroHybridObject.scanWifi(lockData, (errorCode: number, description: string) => {
-      reject({ errorCode, description });
-    });
+    const eventName = TTLockEvent.ScanLockWifi;
+    let subscription: any;
+    if (callback) {
+      subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+        const dataArray = data as any[];
+        callback(dataArray[0], dataArray[1] as ScanWifiModal[]);
+      });
+    }
+    TtlockNitroHybridObject.scanWifi(
+      lockData,
+      (errorCode: number, description: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        if (fail) {
+          fail(errorCode, description);
+        }
+        reject({ errorCode, description });
+      }
+    );
     // Note: scanWifi emits events via DeviceEventManagerModule
     // The promise resolves when scanning completes (handled by event)
     resolve();
@@ -807,7 +1059,11 @@ export function configServer(
 
 export function getWifiInfo(lockData: string): Promise<[string, number]> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.getWifiInfo(lockData, resolve, reject);
+    TtlockNitroHybridObject.getWifiInfo(
+      lockData,
+      (data: StringNumberPair) => resolve([data.first, data.second]),
+      reject
+    );
   });
 }
 
@@ -821,9 +1077,7 @@ export function configIp(
 }
 
 // Wifi Power Saving
-export function getWifiPowerSavingTime(
-  lockData: string
-): Promise<string> {
+export function getWifiPowerSavingTime(lockData: string): Promise<string> {
   return promisify((resolve, reject) => {
     TtlockNitroHybridObject.getWifiPowerSavingTime(lockData, resolve, reject);
   });
@@ -858,16 +1112,37 @@ export function addFace(
   cycleList: CycleDateParam[] | null,
   startDate: number,
   endDate: number,
-  lockData: string
+  lockData: string,
+  progress?: (state: number, faceErrorCode: number) => void
 ): Promise<string> {
   return promisify((resolve, reject) => {
+    const eventName = TTLockEvent.AddFaceProgress;
+    let subscription: any;
+    if (progress) {
+      subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+        const dataArray = data as number[];
+        if (dataArray && dataArray.length >= 2) {
+          progress(dataArray[0] ?? 0, dataArray[1] ?? 0);
+        }
+      });
+    }
     TtlockNitroHybridObject.addFace(
       cycleList,
       startDate,
       endDate,
       lockData,
-      resolve,
-      reject
+      (faceNumber: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        resolve(faceNumber);
+      },
+      (errorCode: number, description: string) => {
+        if (subscription) {
+          subscription.remove();
+        }
+        reject(errorCode, description);
+      }
     );
   });
 }
@@ -933,7 +1208,13 @@ export function activateLiftFloors(
   lockData: string
 ): Promise<[number, number, number]> {
   return promisify((resolve, reject) => {
-    TtlockNitroHybridObject.activateLiftFloors(floors, lockData, resolve, reject);
+    TtlockNitroHybridObject.activateLiftFloors(
+      floors,
+      lockData,
+      (data: NumberNumberNumberTriple) =>
+        resolve([data.first, data.second, data.third]),
+      reject
+    );
   });
 }
 
@@ -956,7 +1237,12 @@ export function setLiftWorkMode(
   lockData: string
 ): Promise<void> {
   return promisifyVoid((resolve, reject) => {
-    TtlockNitroHybridObject.setLiftWorkMode(workMode, lockData, resolve, reject);
+    TtlockNitroHybridObject.setLiftWorkMode(
+      workMode,
+      lockData,
+      resolve,
+      reject
+    );
   });
 }
 
@@ -986,10 +1272,17 @@ export function supportFunction(
   });
 }
 
-// Note: Events are handled via DeviceEventManagerModule in the native module
-// For event handling, use NativeEventEmitter from react-native
-// Example:
-// import { NativeEventEmitter, NativeModules } from 'react-native';
-// const ttLockEmitter = new NativeEventEmitter(NativeModules.Ttlock);
-// ttLockEmitter.addListener(TTLockEvent.ScanLock, (data) => { ... });
+// Event Listeners
+export function addListener(
+  eventName: string,
+  listener: (eventName: string) => void
+): void {
+  TtlockNitroHybridObject.addListener(eventName, listener);
+}
 
+export function removeListener(
+  eventName: string,
+  listener: (eventName: string) => void
+): void {
+  TtlockNitroHybridObject.removeListener(eventName, listener);
+}

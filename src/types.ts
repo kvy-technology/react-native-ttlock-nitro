@@ -76,6 +76,37 @@ export interface InitGatewayParam {
   alternateDns: string | undefined;
 }
 
+export interface InitLockParam {
+  lockMac: string;
+  clientPara?: string;
+}
+
+export interface NumberStringPair {
+  first: number;
+  second: string;
+}
+
+export interface NumberNumberPair {
+  first: number;
+  second: number;
+}
+
+export interface NumberNumberNumberTriple {
+  first: number;
+  second: number;
+  third: number;
+}
+
+export interface NumberBooleanPair {
+  first: number;
+  second: boolean;
+}
+
+export interface StringNumberPair {
+  first: string;
+  second: number;
+}
+
 export interface InitGatewayModal {
   modelNum: string;
   hardwareRevision: string;

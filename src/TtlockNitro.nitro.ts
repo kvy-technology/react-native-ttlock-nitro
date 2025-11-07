@@ -1,10 +1,16 @@
-import type { HybridObject } from 'react-native-nitro-modules';
+import type { AnyMap, HybridObject } from 'react-native-nitro-modules';
 import type {
   InitGatewayParam,
   InitGatewayModal,
   DeviceSystemModal,
   WifiLockServerInfo,
   CycleDateParam,
+  InitLockParam,
+  NumberStringPair,
+  NumberNumberPair,
+  NumberNumberNumberTriple,
+  NumberBooleanPair,
+  StringNumberPair,
 } from './types';
 
 export interface TtlockNitro
@@ -15,7 +21,7 @@ export interface TtlockNitro
   initWirelessKeypad(
     keypadMac: string,
     lockMac: string,
-    resolve: (data: [number, string]) => void,
+    resolve: (data: NumberStringPair) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
 
@@ -25,7 +31,7 @@ export interface TtlockNitro
   initDoorSensor(
     doorSensorMac: string,
     lockData: string,
-    resolve: (data: [number, string]) => void,
+    resolve: (data: NumberStringPair) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
 
@@ -35,7 +41,7 @@ export interface TtlockNitro
   initRemoteKey(
     remoteMac: string,
     lockData: string,
-    resolve: (data: [number, string]) => void,
+    resolve: (data: NumberStringPair) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
   getRemoteKeySystemInfo(
@@ -47,13 +53,8 @@ export interface TtlockNitro
   // Gateway
   startScanGateway(): void;
   stopScanGateway(): void;
-  connect(
-    mac: string,
-    resolve: (state: number) => void
-  ): void;
-  getNearbyWifi(
-    resolve: (state: number) => void
-  ): void;
+  connect(mac: string, resolve: (state: number) => void): void;
+  getNearbyWifi(resolve: (state: number) => void): void;
   initGateway(
     params: InitGatewayParam,
     resolve: (data: InitGatewayModal) => void,
@@ -64,7 +65,7 @@ export interface TtlockNitro
   startScan(): void;
   stopScan(): void;
   initLock(
-    params: { lockMac: string; clientPara?: string },
+    params: InitLockParam,
     resolve: (lockData: string) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
@@ -77,7 +78,7 @@ export interface TtlockNitro
     accessoryType: number,
     accessoryMac: string,
     lockData: string,
-    resolve: (data: [number, number]) => void,
+    resolve: (data: NumberNumberPair) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
   resetLock(
@@ -93,7 +94,7 @@ export interface TtlockNitro
   controlLock(
     controlAction: number,
     lockData: string,
-    resolve: (data: [number, number, number]) => void,
+    resolve: (data: NumberNumberNumberTriple) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
 
@@ -257,7 +258,7 @@ export interface TtlockNitro
   // Automatic Locking
   getLockAutomaticLockingPeriodicTime(
     lockData: string,
-    resolve: (data: [number, number, number]) => void,
+    resolve: (data: NumberNumberNumberTriple) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
   setLockAutomaticLockingPeriodicTime(
@@ -284,7 +285,7 @@ export interface TtlockNitro
   getLockConfig(
     config: number,
     lockData: string,
-    resolve: (data: [number, boolean]) => void,
+    resolve: (data: NumberBooleanPair) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
   setLockConfig(
@@ -414,7 +415,7 @@ export interface TtlockNitro
   ): void;
   getWifiInfo(
     lockData: string,
-    resolve: (data: [string, number]) => void,
+    resolve: (data: StringNumberPair) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
   configIp(
@@ -487,7 +488,7 @@ export interface TtlockNitro
   activateLiftFloors(
     floors: string,
     lockData: string,
-    resolve: (data: [number, number, number]) => void,
+    resolve: (data: NumberNumberNumberTriple) => void,
     reject: (errorCode: number, description: string) => void
   ): void;
   setLiftControlEnableFloors(
@@ -511,4 +512,13 @@ export interface TtlockNitro
     resolve: (isSupport: boolean) => void
   ): void;
 
+  // Event Listeners
+  addListener(
+    eventName: string,
+    listener: (eventName: string, data: AnyMap | undefined) => void
+  ): void;
+  removeListener(
+    eventName: string,
+    listener: (eventName: string, data: AnyMap | undefined) => void
+  ): void;
 }

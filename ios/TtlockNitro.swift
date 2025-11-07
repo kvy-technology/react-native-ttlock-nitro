@@ -1,5 +1,6 @@
 import TTLock
 import React
+import NitroModules
 
 // Event names
 let EVENT_SCAN_LOCK = "EventScanLock"
@@ -22,6 +23,8 @@ enum Device {
 }
 
 class TtlockNitro: HybridTtlockNitroSpec {
+    var listeners: [String: [(String, AnyMap?) -> Void]] = [:]
+
     override init() {
         super.init()
         TTLock.setupBluetooth { state in
@@ -31,8 +34,15 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // Helper to send events
     private func sendEvent(_ eventName: String, body: Any?) {
-        guard let bridge = RCTBridge.current() else { return }
-        bridge.eventDispatcher().sendDeviceEvent(withName: eventName, body: body)
+
+
+        // Notify registered listeners
+        if let eventListeners = listeners[eventName] {
+            let data = body as? AnyMap
+            for listener in eventListeners {
+                listener(eventName, data)
+            }
+        }
     }
 
     // Helper to convert model to dictionary
@@ -418,7 +428,11 @@ class TtlockNitro: HybridTtlockNitroSpec {
         } ?? []
 
         TTLock.addFingerprint(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { currentCount, totalCount in
-            self.sendEvent(EVENT_ADD_FINGERPRINT_PROGRESS, body: [currentCount, totalCount])
+            let data: [String: Any] = [
+                "current": currentCount,
+                "total": totalCount
+            ]
+            self.sendEvent(EVENT_ADD_FINGERPRINT_PROGRESS, body: data)
         }, success: { fingerprintNumber in
             resolve(fingerprintNumber)
         }, failure: { errorCode, errorMsg in
@@ -717,7 +731,11 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func scanWifi(lockData: String, reject: @escaping (Int, String) -> Void) {
         TTLock.scanWifi(withLockData: lockData, success: { isFinished, wifiArr in
-            self.sendEvent(EVENT_SCAN_LOCK_WIFI, body: [isFinished, wifiArr])
+            let data: [String: Any] = [
+                "isFinished": isFinished,
+                "wifis": wifiArr
+            ]
+            self.sendEvent(EVENT_SCAN_LOCK_WIFI, body: data)
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -796,7 +814,11 @@ class TtlockNitro: HybridTtlockNitroSpec {
         TTLock.addFace(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { state, faceErrorCode in
             if state == .canStartAdd || state == .error {
                 let stateValue = state.rawValue - 2
-                self.sendEvent(EVENT_ADD_FACE_PROGRESS, body: [stateValue, faceErrorCode.rawValue])
+                let data: [String: Any] = [
+                    "step": stateValue,
+                    "status": faceErrorCode.rawValue
+                ]
+                self.sendEvent(EVENT_ADD_FACE_PROGRESS, body: data)
             }
         }, success: { faceNumber in
             resolve(faceNumber)
@@ -914,7 +936,10 @@ class TtlockNitro: HybridTtlockNitroSpec {
                     wifiDict["rssi"] = dict["RSSI"] ?? 0
                     wifiList.append(wifiDict)
                 }
-                self.sendEvent(EVENT_SCAN_WIFI, body: wifiList)
+                let data: [String: Any] = [
+                    "wifis": wifiList
+                ]
+                self.sendEvent(EVENT_SCAN_WIFI, body: data)
 
                 if isFinished {
                     resolve(status.rawValue)
@@ -1076,5 +1101,20 @@ class TtlockNitro: HybridTtlockNitroSpec {
             return "{}"
         }
         return jsonString
+    }
+
+    // MARK: - Event Listeners
+    public func addListener(eventName: String, listener: @escaping (String, AnyMap?) -> Void) {
+        if listeners[eventName] == nil {
+            listeners[eventName] = []
+        }
+        listeners[eventName]?.append(listener)
+    }
+
+    public func removeListener(eventName: String, listener: @escaping (String, AnyMap?) -> Void) {
+        // Note: Swift closures cannot be compared directly
+        // In practice, you may want to implement this using listener IDs
+        // For now, we'll clear all listeners for the event
+        listeners[eventName]?.removeAll()
     }
 }
