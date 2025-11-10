@@ -20,6 +20,7 @@ Pod::Spec.new do |s|
     "cpp/**/*.{hpp,cpp}",
   ]
 
+  s.dependency "React"
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
   s.dependency 'TTLock', '3.5.4'
