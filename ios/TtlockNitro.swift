@@ -515,32 +515,32 @@ class TtlockNitro: HybridTtlockNitroSpec {
     }
 
     // Helper: response fail for TTError
-    private func responseFail(_ device: Device, code: TTError, errorMessage: String?, reject: @escaping (Int, String) -> Void) {
-        let errorCode = getTTLockErrorCode(code)
+    private func responseFail(_ device: Device, code: TTError, errorMessage: String?, reject: @escaping (Double, String) -> Void) {
+        let errorCode = Double(getTTLockErrorCode(code))
         reject(errorCode, errorMessage ?? "")
     }
 
     // Helper: response fail for Gateway
-    private func responseFail(_ device: Device, code: TTGatewayStatus, errorMessage: String?, reject: @escaping (Int, String) -> Void) {
-        let errorCode = getTTGatewayErrorCode(code)
+    private func responseFail(_ device: Device, code: TTGatewayStatus, errorMessage: String?, reject: @escaping (Double, String) -> Void) {
+        let errorCode = Double(getTTGatewayErrorCode(code))
         reject(errorCode, errorMessage ?? "")
     }
 
     // Helper: response fail for KeyFob
-    private func responseFail(_ device: Device, code: TTKeyFobStatus, errorMessage: String?, reject: @escaping (Int, String) -> Void) {
-        let errorCode = getTTRemoteKeyErrorCode(code)
+    private func responseFail(_ device: Device, code: TTKeyFobStatus, errorMessage: String?, reject: @escaping (Double, String) -> Void) {
+        let errorCode = Double(getTTRemoteKeyErrorCode(code))
         reject(errorCode, errorMessage ?? "")
     }
 
     // Helper: response fail for Keypad
-    private func responseFail(_ device: Device, code: TTKeypadStatus, errorMessage: String?, reject: @escaping (Int, String) -> Void) {
-        let errorCode = getTTRemoteKeypadErrorCode(code)
+    private func responseFail(_ device: Device, code: TTKeypadStatus, errorMessage: String?, reject: @escaping (Double, String) -> Void) {
+        let errorCode = Double(getTTRemoteKeypadErrorCode(code))
         reject(errorCode, errorMessage ?? "")
     }
 
     // Helper: response fail for DoorSensor
-    private func responseFail(_ device: Device, code: TTDoorSensorError, errorMessage: String?, reject: @escaping (Int, String) -> Void) {
-        let errorCode = getTTDoorSensorErrorCode(code)
+    private func responseFail(_ device: Device, code: TTDoorSensorError, errorMessage: String?, reject: @escaping (Double, String) -> Void) {
+        let errorCode = Double(getTTDoorSensorErrorCode(code))
         reject(errorCode, errorMessage ?? "")
     }
 
@@ -647,12 +647,12 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Utility
 
-    public func getBluetoothState(resolve: @escaping (Int) -> Void) {
+    public func getBluetoothState(resolve: @escaping (Double) -> Void) {
         let bluetoothState = TTLock.bluetoothState
-        resolve(Int(bluetoothState.rawValue))
+        resolve(Double(bluetoothState.rawValue))
     }
 
-    public func supportFunction(lockFunction: Int, lockData: String, resolve: @escaping (Bool) -> Void) {
+    public func supportFunction(lockFunction: Double, lockData: String, resolve: @escaping (Bool) -> Void) {
         let feature = TTLockFeatureValue(rawValue: Int(lockFunction)) ?? TTLockFeatureValue(rawValue: 0)!
         let isSupport = TTUtil.lockFeatureValue(lockData, suportFunction: feature)
         resolve(isSupport)
@@ -681,12 +681,12 @@ class TtlockNitro: HybridTtlockNitroSpec {
         TTLock.stopScan()
     }
 
-    public func initLock(params: [String: Any], resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func initLock(params: InitLockParam, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         var dict: [String: Any] = [:]
-        if let lockMac = params["lockMac"] as? String {
+        if let lockMac = params.lockMac {
             dict["lockMac"] = lockMac
         }
-        if let clientPara = params["clientPara"] as? String {
+        if let clientPara = params.clientPara {
             dict["clientPara"] = clientPara
         }
         TTLock.initLock(withDict: dict, success: { lockData in
@@ -696,7 +696,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func getLockVersionWithLockMac(lockMac: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockVersionWithLockMac(lockMac: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getLockVersion(withLockMac: lockMac, success: { lockVersion in
             resolve(self.dictionaryToJson(lockVersion as? [String: Any] ?? [:]))
         }, failure: { errorCode, errorMsg in
@@ -704,16 +704,16 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func getAccessoryElectricQuantity(accessoryType: Int, accessoryMac: String, lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getAccessoryElectricQuantity(accessoryType: Double, accessoryMac: String, lockData: String, resolve: @escaping (NumberNumberPair) -> Void, reject: @escaping (Double, String) -> Void) {
         let type = TTAccessoryType(rawValue: Int32(accessoryType)) ?? .doorSensor
         TTLock.getAccessoryElectricQuantity(with: type, accessoryMac: accessoryMac, lockData: lockData, success: { electricQuantity, updateDate in
-            resolve([electricQuantity, Int32(updateDate)] as NSArray)
+            resolve((Double(electricQuantity), Double(updateDate)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
-    public func resetLock(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func resetLock(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.resetLock(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -721,7 +721,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func resetEkey(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func resetEkey(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.resetEkey(withLockData: lockData, success: { lockData in
             resolve(lockData ?? "")
         }, failure: { errorCode, errorMsg in
@@ -729,10 +729,10 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func controlLock(controlAction: Int, lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
-        let action = TTControlAction(rawValue: controlAction + 1)!
+    public func controlLock(controlAction: Double, lockData: String, resolve: @escaping (NumberNumberNumberTriple) -> Void, reject: @escaping (Double, String) -> Void) {
+        let action = TTControlAction(rawValue: Int(controlAction) + 1)!
         TTLock.controlLock(with: action, lockData: lockData, success: { lockTime, electricQuantity, uniqueId in
-            resolve([Int(lockTime), electricQuantity, Int(uniqueId)] as NSArray)
+            resolve((Double(lockTime), Double(electricQuantity), Double(uniqueId)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -740,7 +740,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Passcode Operations
 
-    public func createCustomPasscode(passcode: String, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func createCustomPasscode(passcode: String, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.createCustomPasscode(passcode, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -748,8 +748,8 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func recoverPasscode(passcode: String, passcodeType: Int, cycleType: Int, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
-        let type = TTPasscodeType(rawValue: passcodeType) ?? .permanent
+    public func recoverPasscode(passcode: String, passcodeType: Double, cycleType: Double, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
+        let type = TTPasscodeType(rawValue: Int(passcodeType)) ?? .permanent
         TTLock.recoverPasscode(passcode, newPasscode: passcode, passcodeType: type, startDate: Int64(startDate), endDate: Int64(endDate), cycleType: Int32(cycleType), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -757,7 +757,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func modifyPasscode(passcodeOrigin: String, passcodeNew: String, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func modifyPasscode(passcodeOrigin: String, passcodeNew: String, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.modifyPasscode(passcodeOrigin, newPasscode: passcodeNew, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -765,7 +765,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func deletePasscode(passcode: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func deletePasscode(passcode: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.deletePasscode(passcode, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -773,7 +773,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func resetPasscode(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func resetPasscode(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.resetPasscodes(withLockData: lockData, success: { lockData in
             resolve(lockData ?? "")
         }, failure: { errorCode, errorMsg in
@@ -783,9 +783,9 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Lock Status
 
-    public func getLockSwitchState(lockData: String, resolve: @escaping (Int) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockSwitchState(lockData: String, resolve: @escaping (Double) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getLockSwitchState(withLockData: lockData, success: { state, _ in
-            resolve(state.rawValue)
+            resolve(Double(state.rawValue))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -793,7 +793,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Card Operations
 
-    public func addCard(cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func addCard(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.addICCard(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { _ in
             self.sendEvent(EVENT_ADD_CARD_PROGRESS, body: nil)
@@ -804,7 +804,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func recoverCard(cardNumber: String, cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func recoverCard(cardNumber: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.recoverICCard(withCyclicConfig: cyclicConfig, cardNumber: cardNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: { cardNumber in
             resolve(cardNumber ?? "")
@@ -813,7 +813,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func modifyCardValidityPeriod(cardNumber: String, cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func modifyCardValidityPeriod(cardNumber: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.modifyICCardValidityPeriod(withCyclicConfig: cyclicConfig, cardNumber: cardNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
@@ -822,7 +822,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func deleteCard(cardNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func deleteCard(cardNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.deleteICCardNumber(cardNumber, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -830,7 +830,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearAllCards(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearAllCards(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearAllICCards(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -840,7 +840,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Fingerprint Operations
 
-    public func addFingerprint(cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func addFingerprint(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.addFingerprint(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { currentCount, totalCount in
             let data: [String: Any] = [
@@ -855,7 +855,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func modifyFingerprintValidityPeriod(fingerprintNumber: String, cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func modifyFingerprintValidityPeriod(fingerprintNumber: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.modifyFingerprintValidityPeriod(withCyclicConfig: cyclicConfig, fingerprintNumber: fingerprintNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
@@ -864,7 +864,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func deleteFingerprint(fingerprintNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func deleteFingerprint(fingerprintNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.deleteFingerprintNumber(fingerprintNumber, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -872,7 +872,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearAllFingerprints(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearAllFingerprints(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearAllFingerprints(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -882,7 +882,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Admin Passcode
 
-    public func modifyAdminPasscode(adminPasscode: String, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func modifyAdminPasscode(adminPasscode: String, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.modifyAdminPasscode(adminPasscode, lockData: lockData, success: {
             resolve(adminPasscode)
         }, failure: { errorCode, errorMsg in
@@ -892,7 +892,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Lock Time
 
-    public func setLockTime(timestamp: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setLockTime(timestamp: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.setLockTimeWithTimestamp(Int64(timestamp), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -900,7 +900,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func getLockTime(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockTime(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getLockTime(withLockData: lockData, success: { lockTimestamp in
             resolve(String(lockTimestamp))
         }, failure: { errorCode, errorMsg in
@@ -910,7 +910,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Lock System Info
 
-    public func getLockSystem(lockData: String, resolve: @escaping (NSDictionary) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockSystem(lockData: String, resolve: @escaping (DeviceSystemModal) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getLockSystemInfo(withLockData: lockData, success: { systemModel in
             resolve(self.dictionaryFromModel(systemModel) as NSDictionary)
         }, failure: { errorCode, errorMsg in
@@ -918,9 +918,9 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func getLockElectricQuantity(lockData: String, resolve: @escaping (Int) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockElectricQuantity(lockData: String, resolve: @escaping (Double) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getElectricQuantity(withLockData: lockData, success: { electricQuantity in
-            resolve(electricQuantity)
+            resolve(Double(electricQuantity))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -928,8 +928,8 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Operation Record
 
-    public func getLockOperationRecord(type: Int, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
-        let logType = TTOperateLogType(rawValue: type + 1)!
+    public func getLockOperationRecord(type: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
+        let logType = TTOperateLogType(rawValue: Int(type) + 1)!
         TTLock.getOperationLog(with: logType, lockData: lockData, success: { operateRecord in
             resolve(operateRecord ?? "")
         }, failure: { errorCode, errorMsg in
@@ -939,15 +939,15 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Automatic Locking
 
-    public func getLockAutomaticLockingPeriodicTime(lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockAutomaticLockingPeriodicTime(lockData: String, resolve: @escaping (NumberNumberNumberTriple) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getAutomaticLockingPeriodicTime(withLockData: lockData, success: { currentTime, minTime, maxTime in
-            resolve([currentTime, maxTime, minTime] as NSArray)
+            resolve((Double(currentTime), Double(maxTime), Double(minTime)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
-    public func setLockAutomaticLockingPeriodicTime(seconds: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setLockAutomaticLockingPeriodicTime(seconds: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.setAutomaticLockingPeriodicTime(Int32(seconds), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -957,7 +957,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Remote Unlock Switch
 
-    public func getLockRemoteUnlockSwitchState(lockData: String, resolve: @escaping (Bool) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockRemoteUnlockSwitchState(lockData: String, resolve: @escaping (Bool) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getRemoteUnlockSwitch(withLockData: lockData, success: { isOn in
             resolve(isOn)
         }, failure: { errorCode, errorMsg in
@@ -965,7 +965,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func setLockRemoteUnlockSwitchState(isOn: Bool, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setLockRemoteUnlockSwitchState(isOn: Bool, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.setRemoteUnlockSwitchOn(isOn, lockData: lockData, success: { lockData in
             resolve(lockData ?? "")
         }, failure: { errorCode, errorMsg in
@@ -975,17 +975,17 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Lock Config
 
-    public func getLockConfig(config: Int, lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
-        let type = TTLockConfigType(rawValue: config + 1)!
+    public func getLockConfig(config: Double, lockData: String, resolve: @escaping (NumberBooleanPair) -> Void, reject: @escaping (Double, String) -> Void) {
+        let type = TTLockConfigType(rawValue: Int(config) + 1)!
         TTLock.getConfigWith(type, lockData: lockData, success: { type, isOn in
-            resolve([type.rawValue, isOn] as NSArray)
+            resolve((Double(type.rawValue), isOn))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
-    public func setLockConfig(config: Int, isOn: Bool, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
-        let type = TTLockConfigType(rawValue: config + 1)!
+    public func setLockConfig(config: Double, isOn: Bool, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
+        let type = TTLockConfigType(rawValue: Int(config) + 1)!
         TTLock.setLockConfigWith(type, on: isOn, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -995,22 +995,22 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Sound Volume
 
-    public func setLockSoundVolume(soundVolumeValue: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setLockSoundVolume(soundVolumeValue: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let soundVolume: TTSoundVolume
         switch soundVolumeValue {
-        case TTSoundVolumeValue.TTSoundVolumeOn:
+        case Double(TTSoundVolumeValue.TTSoundVolumeOn):
             soundVolume = .on
-        case TTSoundVolumeValue.TTSoundVolumeOff:
+        case Double(TTSoundVolumeValue.TTSoundVolumeOff):
             soundVolume = .off
-        case TTSoundVolumeValue.TTSoundVolumeFirstLevel:
+        case Double(TTSoundVolumeValue.TTSoundVolumeFirstLevel):
             soundVolume = .firstLevel
-        case TTSoundVolumeValue.TTSoundVolumeSecondLevel:
+        case Double(TTSoundVolumeValue.TTSoundVolumeSecondLevel):
             soundVolume = .secondLevel
-        case TTSoundVolumeValue.TTSoundVolumeThirdLevel:
+        case Double(TTSoundVolumeValue.TTSoundVolumeThirdLevel):
             soundVolume = .thirdLevel
-        case TTSoundVolumeValue.TTSoundVolumeFourthLevel:
+        case Double(TTSoundVolumeValue.TTSoundVolumeFourthLevel):
             soundVolume = .fourthLevel
-        case TTSoundVolumeValue.TTSoundVolumeFifthLevel:
+        case Double(TTSoundVolumeValue.TTSoundVolumeFifthLevel):
             soundVolume = .fifthLevel
         default:
             soundVolume = .off
@@ -1023,9 +1023,9 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func getLockSoundVolume(lockData: String, resolve: @escaping (Int) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getLockSoundVolume(lockData: String, resolve: @escaping (Double) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getLockSound(withLockData: lockData, success: { soundVolume in
-            resolve(Int(soundVolume.rawValue))
+            resolve(Double(soundVolume.rawValue))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -1033,15 +1033,15 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Unlock Direction
 
-    public func getUnlockDirection(lockData: String, resolve: @escaping (Int) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getUnlockDirection(lockData: String, resolve: @escaping (Double) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getUnlockDirection(withLockData: lockData, success: { direction in
-            resolve(Int(direction.rawValue))
+            resolve(Double(direction.rawValue))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
-    public func setUnlockDirection(direction: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setUnlockDirection(direction: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let unlockDirection = TTUnlockDirection(rawValue: Int32(direction)) ?? .left
         TTLock.setUnlockDirection(unlockDirection, lockData: lockData, success: {
             resolve()
@@ -1050,9 +1050,9 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func setUnlockDirectionAutomatic(lockData: String, resolve: @escaping (Int) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setUnlockDirectionAutomatic(lockData: String, resolve: @escaping (Double) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.autoSetUnlockDirection(withLockData: lockData, success: { state in
-            resolve(Int(state.rawValue))
+            resolve(Double(state.rawValue))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -1060,8 +1060,8 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Passage Mode
 
-    public func addPassageMode(type: Int, weekly: [Int]?, monthly: [Int]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
-        let modeType = TTPassageModeType(rawValue: type + 1)!
+    public func addPassageMode(type: Double, weekly: [Double]?, monthly: [Double]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
+        let modeType = TTPassageModeType(rawValue: Int(type) + 1)!
         let weeklyArray = weekly?.map { NSNumber(value: $0) } ?? []
         let monthlyArray = monthly?.map { NSNumber(value: $0) } ?? []
 
@@ -1072,7 +1072,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearAllPassageModes(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearAllPassageModes(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearPassageMode(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1082,7 +1082,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Remote Key
 
-    public func addRemoteKey(remoteMac: String, cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func addRemoteKey(remoteMac: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.addWirelessKeyFob(withCyclicConfig: cyclicConfig, keyFobMac: remoteMac, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
@@ -1091,7 +1091,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func modifyRemoteKey(remoteMac: String, cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func modifyRemoteKey(remoteMac: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.modifyWirelessKeyFobValidityPeriod(withCyclicConfig: cyclicConfig, keyFobMac: remoteMac, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
@@ -1100,7 +1100,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func deleteRemoteKey(remoteMac: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func deleteRemoteKey(remoteMac: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.deleteWirelessKeyFob(withKeyFobMac: remoteMac, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1108,7 +1108,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearAllRemoteKey(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearAllRemoteKey(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearWirelessKeyFobs(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1118,7 +1118,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Door Sensor
 
-    public func addDoorSensor(doorSensorMac: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func addDoorSensor(doorSensorMac: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.addDoorSensor(withDoorSensorMac: doorSensorMac, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1126,7 +1126,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearAllDoorSensor(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearAllDoorSensor(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearDoorSensor(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1134,7 +1134,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func setDoorSensorAlertTime(time: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setDoorSensorAlertTime(time: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.setDoorSensorAlertTime(Int32(time), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1144,7 +1144,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Wifi Operations
 
-    public func scanWifi(lockData: String, reject: @escaping (Int, String) -> Void) {
+    public func scanWifi(lockData: String, reject: @escaping (Double, String) -> Void) {
         TTLock.scanWifi(withLockData: lockData, success: { isFinished, wifiArr in
             let data: [String: Any] = [
                 "isFinished": isFinished,
@@ -1156,7 +1156,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func configWifi(wifiName: String, wifiPassword: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func configWifi(wifiName: String, wifiPassword: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.configWifi(withSSID: wifiName, wifiPassword: wifiPassword, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1164,7 +1164,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func configServer(ip: String, port: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func configServer(ip: String, port: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.configServer(withServerAddress: ip, portNumber: port, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1172,15 +1172,15 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func getWifiInfo(lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getWifiInfo(lockData: String, resolve: @escaping (StringNumberPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getWifiInfo(withLockData: lockData, success: { wifiMac, wifiRssi in
-            resolve([wifiMac ?? "", wifiRssi] as NSArray)
+            resolve((wifiMac ?? "", Double(wifiRssi)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
-    public func configIp(info: [String: Any], lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func configIp(info: WifiLockServerInfo, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.configIp(withInfo: info, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1190,7 +1190,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Wifi Power Saving
 
-    public func getWifiPowerSavingTime(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getWifiPowerSavingTime(lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getWifiPowerSavingTime(withLockData: lockData, success: { timesJsonString in
             resolve(timesJsonString ?? "")
         }, failure: { errorCode, errorMsg in
@@ -1198,7 +1198,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func configWifiPowerSavingTime(days: [Int]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func configWifiPowerSavingTime(days: [Double]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let weekDays = days?.map { NSNumber(value: $0) } ?? []
         TTLock.configWifiPowerSavingTime(withWeekDays: weekDays, startDate: Int32(startDate), endDate: Int32(endDate), lockData: lockData, success: {
             resolve()
@@ -1207,7 +1207,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearWifiPowerSavingTime(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearWifiPowerSavingTime(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearWifiPowerSavingTime(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1217,7 +1217,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Face Operations
 
-    public func addFace(cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func addFace(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.addFace(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { state, faceErrorCode in
             if state == .canStartAdd || state == .error {
@@ -1235,7 +1235,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func addFaceFeatureData(faceFeatureData: String, cycleList: [[String: Any]]?, startDate: Int, endDate: Int, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func addFaceFeatureData(faceFeatureData: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.addFaceFeatureData(faceFeatureData, cyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: { faceNumber in
             resolve(faceNumber ?? "")
@@ -1244,7 +1244,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func modifyFaceValidityPeriod(cycleList: [[String: Any]]?, startDate: Int, endDate: Int, faceNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func modifyFaceValidityPeriod(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, faceNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let cyclicConfig = cycleList ?? []
         TTLock.modifyFaceValidity(withCyclicConfig: cyclicConfig, faceNumber: faceNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
@@ -1253,7 +1253,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func deleteFace(faceNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func deleteFace(faceNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.deleteFaceNumber(faceNumber, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1261,7 +1261,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func clearFace(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func clearFace(lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.clearFace(withLockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1271,15 +1271,15 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     // MARK: - Lift Operations
 
-    public func activateLiftFloors(floors: String, lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func activateLiftFloors(floors: String, lockData: String, resolve: @escaping (NumberNumberNumberTriple) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.activateLiftFloors(floors, lockData: lockData, success: { lockTime, electricQuantity, uniqueId in
-            resolve([Int(lockTime), electricQuantity, Int(uniqueId)] as NSArray)
+            resolve((Double(lockTime), Double(electricQuantity), Double(uniqueId)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
-    public func setLiftControlEnableFloors(floors: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setLiftControlEnableFloors(floors: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.setLiftControlableFloors(floors, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1287,7 +1287,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func setLiftWorkMode(workMode: Int, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Int, String) -> Void) {
+    public func setLiftWorkMode(workMode: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
         let liftWorkMode = TTLiftWorkMode(rawValue: Int32(workMode))!
         TTLock.setLiftWorkMode(liftWorkMode, lockData: lockData, success: {
             resolve()
@@ -1315,13 +1315,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
         TTGateway.stopScanGateway()
     }
 
-    public func connect(mac: String, resolve: @escaping (Int) -> Void) {
+    public func connect(mac: String, resolve: @escaping (Double) -> Void) {
         TTGateway.connectGateway(withGatewayMac: mac) { connectStatus in
             resolve(connectStatus.rawValue)
         }
     }
 
-    public func getNearbyWifi(resolve: @escaping (Int) -> Void) {
+    public func getNearbyWifi(resolve: @escaping (Double) -> Void) {
         TTGateway.scanWiFiByGateway({ isFinished, wifiArr, status in
             if status == .success {
                 var wifiList: [[String: Any]] = []
@@ -1347,17 +1347,17 @@ class TtlockNitro: HybridTtlockNitroSpec {
         })
     }
 
-    public func initGateway(params: [String: Any], resolve: @escaping (NSDictionary) -> Void, reject: @escaping (Int) -> Void) {
-        let gatewayType = TTGatewayType(rawValue: params["type"] as? Int ?? 0)!
+    public func initGateway(params: InitGatewayParam, resolve: @escaping (InitGatewayModal) -> Void, reject: @escaping (Double) -> Void) {
+        let gatewayType = TTGatewayType(rawValue: Int(params.type))!
 
         var paramDict: [String: Any] = [:]
-        paramDict["SSID"] = params["wifi"] ?? ""
-        paramDict["wifiPwd"] = params["wifiPassword"] ?? ""
-        paramDict["uid"] = params["ttLockUid"] ?? ""
-        paramDict["userPwd"] = params["ttLockLoginPassword"] ?? ""
-        paramDict["gatewayName"] = params["gatewayName"] ?? ""
-        paramDict["serverAddress"] = params["serverIp"] ?? ""
-        paramDict["portNumber"] = params["serverPort"] ?? ""
+        paramDict["SSID"] = params.wifi ?? ""
+        paramDict["wifiPwd"] = params.wifiPassword ?? ""
+        paramDict["uid"] = params.ttLockUid ?? ""
+        paramDict["userPwd"] = params.ttLockLoginPassword ?? ""
+        paramDict["gatewayName"] = params.gatewayName ?? ""
+        paramDict["serverAddress"] = params.serverIp ?? ""
+        paramDict["portNumber"] = params.serverPort ?? ""
         paramDict["gatewayVersion"] = gatewayType.rawValue
 
         if gatewayType == .gateWayTypeG3 || gatewayType == .gateWayTypeG4 {
@@ -1365,14 +1365,14 @@ class TtlockNitro: HybridTtlockNitroSpec {
             paramDict["wifiPwd"] = "1"
         }
 
-        if let ipAddress = params["ipAddress"] as? String {
+        if let ipAddress = params.ipAddress {
             var staticIpDict: [String: Any] = [:]
-            staticIpDict["type"] = params["ipSettingType"] ?? 0
+            staticIpDict["type"] = params.ipSettingType ?? 0
             staticIpDict["ipAddress"] = ipAddress
-            staticIpDict["subnetMask"] = params["subnetMask"] ?? ""
-            staticIpDict["router"] = params["router"] ?? ""
-            staticIpDict["preferredDns"] = params["preferredDns"] ?? ""
-            staticIpDict["alternateDns"] = params["alternateDns"] ?? ""
+            staticIpDict["subnetMask"] = params.subnetMask ?? ""
+            staticIpDict["router"] = params.router ?? ""
+            staticIpDict["preferredDns"] = params.preferredDns ?? ""
+            staticIpDict["alternateDns"] = params.alternateDns ?? ""
 
             TTGateway.configIp(withInfo: staticIpDict) { status in
                 if status == TTGatewayStatus.success {
@@ -1425,19 +1425,19 @@ class TtlockNitro: HybridTtlockNitroSpec {
         TTWirelessKeyFob.stopScan()
     }
 
-    public func initRemoteKey(remoteMac: String, lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func initRemoteKey(remoteMac: String, lockData: String, resolve: @escaping (NumberStringPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTWirelessKeyFob.newInitialize(withKeyFobMac: remoteMac, lockData: lockData) { status, electricQuantity, systemModel in
             if status.rawValue == TTKeyFobStatusValue.TTKeyFobSuccess {
-                resolve([electricQuantity, self.dictionaryToJson(self.dictionaryFromModel(systemModel!))] as NSArray)
+                resolve((Double(electricQuantity), self.dictionaryToJson(self.dictionaryFromModel(systemModel!))))
             } else {
                 self.responseFail(.REMOTE_KEY, code: status, errorMessage: nil, reject: reject)
             }
         }
     }
 
-    public func getRemoteKeySystemInfo(remoteMac: String, resolve: @escaping (NSDictionary) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func getRemoteKeySystemInfo(remoteMac: String, resolve: @escaping (DeviceSystemModal) -> Void, reject: @escaping (Double, String) -> Void) {
         // This method might need to be implemented based on TTLock SDK
-        // For now, returning empty dict
+        // For now, returning empty dict - this should be updated when the actual implementation is available
         resolve([:] as NSDictionary)
     }
 
@@ -1458,9 +1458,9 @@ class TtlockNitro: HybridTtlockNitroSpec {
         TTDoorSensor.stopScan()
     }
 
-    public func initDoorSensor(doorSensorMac: String, lockData: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func initDoorSensor(doorSensorMac: String, lockData: String, resolve: @escaping (NumberStringPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTDoorSensor.initialize(withDoorSensorMac: doorSensorMac, lockData: lockData, success: { electricQuantity, systemModel in
-            resolve([electricQuantity, self.dictionaryToJson(self.dictionaryFromModel(systemModel))] as NSArray)
+            resolve((Double(electricQuantity), self.dictionaryToJson(self.dictionaryFromModel(systemModel))))
         }, failure: { error in
             self.responseFail(.DOOR_SENSOR, code: error, errorMessage: nil, reject: reject)
         })
@@ -1483,10 +1483,10 @@ class TtlockNitro: HybridTtlockNitroSpec {
         TTWirelessKeypad.stopScanKeypad()
     }
 
-    public func initWirelessKeypad(keypadMac: String, lockMac: String, resolve: @escaping (NSArray) -> Void, reject: @escaping (Int, String) -> Void) {
+    public func initWirelessKeypad(keypadMac: String, lockMac: String, resolve: @escaping (NumberStringPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTWirelessKeypad.initializeKeypad(withKeypadMac: keypadMac, lockMac: lockMac) { wirelessKeypadFeatureValue, status, electricQuantity in
             if status.rawValue == TTKeypadStatusValue.TTKeypadSuccess {
-                resolve([electricQuantity, wirelessKeypadFeatureValue ?? ""] as NSArray)
+                resolve((Double(electricQuantity), wirelessKeypadFeatureValue ?? ""))
             } else {
                 self.responseFail(.REMOTE_KEY_PAD, code: status, errorMessage: nil, reject: reject)
             }
