@@ -409,4 +409,3 @@ export enum LiftWorkMode {
   ACTIVATE_ALL_FLOORS = 0,
   ACTIVATE_SPECIFIC_FLOORS = 1,
 }
-

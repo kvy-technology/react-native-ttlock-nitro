@@ -683,12 +683,8 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func initLock(params: InitLockParam, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
         var dict: [String: Any] = [:]
-        if let lockMac = params.lockMac {
-            dict["lockMac"] = lockMac
-        }
-        if let clientPara = params.clientPara {
-            dict["clientPara"] = clientPara
-        }
+        dict["lockMac"] = params.lockMac
+        dict["clientPara"] = params.clientPara
         TTLock.initLock(withDict: dict, success: { lockData in
             resolve(lockData ?? "")
         }, failure: { errorCode, errorMsg in
@@ -707,7 +703,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
     public func getAccessoryElectricQuantity(accessoryType: Double, accessoryMac: String, lockData: String, resolve: @escaping (NumberNumberPair) -> Void, reject: @escaping (Double, String) -> Void) {
         let type = TTAccessoryType(rawValue: Int32(accessoryType)) ?? .doorSensor
         TTLock.getAccessoryElectricQuantity(with: type, accessoryMac: accessoryMac, lockData: lockData, success: { electricQuantity, updateDate in
-            resolve((Double(electricQuantity), Double(updateDate)))
+            resolve(NumberNumberPair(first: Double(electricQuantity), second: Double(updateDate)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -732,7 +728,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
     public func controlLock(controlAction: Double, lockData: String, resolve: @escaping (NumberNumberNumberTriple) -> Void, reject: @escaping (Double, String) -> Void) {
         let action = TTControlAction(rawValue: Int(controlAction) + 1)!
         TTLock.controlLock(with: action, lockData: lockData, success: { lockTime, electricQuantity, uniqueId in
-            resolve((Double(lockTime), Double(electricQuantity), Double(uniqueId)))
+            resolve(NumberNumberNumberTriple(first: Double(lockTime), second: Double(electricQuantity), third: Double(uniqueId)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -794,7 +790,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     // MARK: - Card Operations
 
     public func addCard(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.addICCard(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { _ in
             self.sendEvent(EVENT_ADD_CARD_PROGRESS, body: nil)
         }, success: { cardNumber in
@@ -805,16 +807,28 @@ class TtlockNitro: HybridTtlockNitroSpec {
     }
 
     public func recoverCard(cardNumber: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.recoverICCard(withCyclicConfig: cyclicConfig, cardNumber: cardNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: { cardNumber in
-            resolve(cardNumber ?? "")
+            resolve()
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
     public func modifyCardValidityPeriod(cardNumber: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.modifyICCardValidityPeriod(withCyclicConfig: cyclicConfig, cardNumber: cardNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -841,7 +855,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     // MARK: - Fingerprint Operations
 
     public func addFingerprint(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.addFingerprint(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { currentCount, totalCount in
             let data: [String: Any] = [
                 "current": currentCount,
@@ -856,7 +876,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     }
 
     public func modifyFingerprintValidityPeriod(fingerprintNumber: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.modifyFingerprintValidityPeriod(withCyclicConfig: cyclicConfig, fingerprintNumber: fingerprintNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -912,7 +938,17 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func getLockSystem(lockData: String, resolve: @escaping (DeviceSystemModal) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getLockSystemInfo(withLockData: lockData, success: { systemModel in
-            resolve(self.dictionaryFromModel(systemModel) as NSDictionary)
+            resolve(DeviceSystemModal(
+                modelNum: systemModel!.modelNum ?? "",
+                hardwareRevision: systemModel!.hardwareRevision ?? "",
+                firmwareRevision: systemModel!.firmwareRevision ?? "",
+                nbOperator: systemModel!.nbOperator ?? "",
+                nbNodeId: systemModel!.nbNodeId ?? "",
+                nbCardNumber: systemModel!.nbCardNumber ?? "",
+                nbRssi: systemModel!.nbRssi ?? "",
+                passcodeKeyNumber: systemModel!.passcodeKeyNumber ?? "",
+                lockData: systemModel!.lockData ?? ""
+            ))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -941,7 +977,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func getLockAutomaticLockingPeriodicTime(lockData: String, resolve: @escaping (NumberNumberNumberTriple) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getAutomaticLockingPeriodicTime(withLockData: lockData, success: { currentTime, minTime, maxTime in
-            resolve((Double(currentTime), Double(maxTime), Double(minTime)))
+            resolve(NumberNumberNumberTriple(first: Double(currentTime), second: Double(maxTime), third: Double(minTime)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -978,7 +1014,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
     public func getLockConfig(config: Double, lockData: String, resolve: @escaping (NumberBooleanPair) -> Void, reject: @escaping (Double, String) -> Void) {
         let type = TTLockConfigType(rawValue: Int(config) + 1)!
         TTLock.getConfigWith(type, lockData: lockData, success: { type, isOn in
-            resolve((Double(type.rawValue), isOn))
+            resolve(NumberBooleanPair(first: Double(type.rawValue), second: isOn))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -1083,7 +1119,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     // MARK: - Remote Key
 
     public func addRemoteKey(remoteMac: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.addWirelessKeyFob(withCyclicConfig: cyclicConfig, keyFobMac: remoteMac, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1092,7 +1134,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     }
 
     public func modifyRemoteKey(remoteMac: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.modifyWirelessKeyFobValidityPeriod(withCyclicConfig: cyclicConfig, keyFobMac: remoteMac, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1174,14 +1222,23 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func getWifiInfo(lockData: String, resolve: @escaping (StringNumberPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.getWifiInfo(withLockData: lockData, success: { wifiMac, wifiRssi in
-            resolve((wifiMac ?? "", Double(wifiRssi)))
+            resolve(StringNumberPair(first: wifiMac ?? "", second: Double(wifiRssi)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
     }
 
     public func configIp(info: WifiLockServerInfo, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        TTLock.configIp(withInfo: info, lockData: lockData, success: {
+        let infoDict: [String: Any] = [
+            "type": info.type,
+            "ipAddress": info.ipAddress,
+            "subnetMask": info.subnetMask,
+            "router": info.router,
+            "preferredDns": info.preferredDns,
+            "alternateDns": info.alternateDns
+        ]
+
+        TTLock.configIp(withInfo: infoDict, lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
@@ -1218,7 +1275,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     // MARK: - Face Operations
 
     public func addFace(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.addFace(withCyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, progress: { state, faceErrorCode in
             if state == .canStartAdd || state == .error {
                 let stateValue = state.rawValue - 2
@@ -1236,7 +1299,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     }
 
     public func addFaceFeatureData(faceFeatureData: String, cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, lockData: String, resolve: @escaping (String) -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.addFaceFeatureData(faceFeatureData, cyclicConfig: cyclicConfig, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: { faceNumber in
             resolve(faceNumber ?? "")
         }, failure: { errorCode, errorMsg in
@@ -1245,7 +1314,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
     }
 
     public func modifyFaceValidityPeriod(cycleList: [CycleDateParam]?, startDate: Double, endDate: Double, faceNumber: String, lockData: String, resolve: @escaping () -> Void, reject: @escaping (Double, String) -> Void) {
-        let cyclicConfig = cycleList ?? []
+        let cyclicConfig: [[AnyHashable: Any]] = (cycleList ?? []).map { param in
+            [
+                "weekDay": param.weekDay,
+                "startTime": param.startTime,
+                "endTime": param.endTime
+            ]
+        }
         TTLock.modifyFaceValidity(withCyclicConfig: cyclicConfig, faceNumber: faceNumber, startDate: Int64(startDate), endDate: Int64(endDate), lockData: lockData, success: {
             resolve()
         }, failure: { errorCode, errorMsg in
@@ -1273,7 +1348,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func activateLiftFloors(floors: String, lockData: String, resolve: @escaping (NumberNumberNumberTriple) -> Void, reject: @escaping (Double, String) -> Void) {
         TTLock.activateLiftFloors(floors, lockData: lockData, success: { lockTime, electricQuantity, uniqueId in
-            resolve((Double(lockTime), Double(electricQuantity), Double(uniqueId)))
+            resolve(NumberNumberNumberTriple(first: Double(lockTime), second: Double(electricQuantity), third: Double(uniqueId)))
         }, failure: { errorCode, errorMsg in
             self.responseFail(.LOCK, code: errorCode, errorMessage: errorMsg, reject: reject)
         })
@@ -1317,7 +1392,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func connect(mac: String, resolve: @escaping (Double) -> Void) {
         TTGateway.connectGateway(withGatewayMac: mac) { connectStatus in
-            resolve(connectStatus.rawValue)
+            resolve(Double(connectStatus.rawValue))
         }
     }
 
@@ -1339,10 +1414,10 @@ class TtlockNitro: HybridTtlockNitroSpec {
                 self.sendEvent(EVENT_SCAN_WIFI, body: data)
 
                 if isFinished {
-                    resolve(status.rawValue)
+                    resolve(Double(status.rawValue))
                 }
             } else {
-                resolve(status.rawValue)
+              resolve(Double(status.rawValue))
             }
         })
     }
@@ -1383,13 +1458,13 @@ class TtlockNitro: HybridTtlockNitroSpec {
                                 "hardwareRevision": systemInfoModel?.hardwareRevision ?? "",
                                 "firmwareRevision": systemInfoModel?.firmwareRevision ?? ""
                             ]
-                            resolve(resultDict as NSDictionary)
+                            resolve(InitGatewayModal(modelNum: systemInfoModel?.modelNum ?? "", hardwareRevision: systemInfoModel?.hardwareRevision ?? "", firmwareRevision: systemInfoModel?.firmwareRevision ?? ""))
                         } else {
-                            reject(self.getTTGatewayErrorCode(status))
+                            reject(Double(self.getTTGatewayErrorCode(status)))
                         }
                     }
                 } else {
-                    reject(self.getTTGatewayErrorCode(status))
+                    reject(Double(self.getTTGatewayErrorCode(status)))
                 }
             }
         } else {
@@ -1400,9 +1475,9 @@ class TtlockNitro: HybridTtlockNitroSpec {
                         "hardwareRevision": systemInfoModel?.hardwareRevision ?? "",
                         "firmwareRevision": systemInfoModel?.firmwareRevision ?? ""
                     ]
-                    resolve(resultDict as NSDictionary)
+                    resolve(InitGatewayModal(modelNum: systemInfoModel?.modelNum ?? "", hardwareRevision: systemInfoModel?.hardwareRevision ?? "", firmwareRevision: systemInfoModel?.firmwareRevision ?? ""))
                 } else {
-                    reject(self.getTTGatewayErrorCode(status))
+                    reject(Double(self.getTTGatewayErrorCode(status)))
                 }
             }
         }
@@ -1428,7 +1503,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
     public func initRemoteKey(remoteMac: String, lockData: String, resolve: @escaping (NumberStringPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTWirelessKeyFob.newInitialize(withKeyFobMac: remoteMac, lockData: lockData) { status, electricQuantity, systemModel in
             if status.rawValue == TTKeyFobStatusValue.TTKeyFobSuccess {
-                resolve((Double(electricQuantity), self.dictionaryToJson(self.dictionaryFromModel(systemModel!))))
+                resolve(NumberStringPair(first: Double(electricQuantity), second: self.dictionaryToJson(self.dictionaryFromModel(systemModel!))))
             } else {
                 self.responseFail(.REMOTE_KEY, code: status, errorMessage: nil, reject: reject)
             }
@@ -1438,7 +1513,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
     public func getRemoteKeySystemInfo(remoteMac: String, resolve: @escaping (DeviceSystemModal) -> Void, reject: @escaping (Double, String) -> Void) {
         // This method might need to be implemented based on TTLock SDK
         // For now, returning empty dict - this should be updated when the actual implementation is available
-        resolve([:] as NSDictionary)
+        resolve(DeviceSystemModal(modelNum: remoteMac, hardwareRevision: "", firmwareRevision: "", nbOperator: "", nbNodeId: "", nbCardNumber: "", nbRssi: "", passcodeKeyNumber: "", lockData: ""))
     }
 
     // MARK: - Door Sensor
@@ -1460,7 +1535,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
 
     public func initDoorSensor(doorSensorMac: String, lockData: String, resolve: @escaping (NumberStringPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTDoorSensor.initialize(withDoorSensorMac: doorSensorMac, lockData: lockData, success: { electricQuantity, systemModel in
-            resolve((Double(electricQuantity), self.dictionaryToJson(self.dictionaryFromModel(systemModel))))
+            resolve(NumberStringPair(first: Double(electricQuantity), second: self.dictionaryToJson(self.dictionaryFromModel(systemModel))))
         }, failure: { error in
             self.responseFail(.DOOR_SENSOR, code: error, errorMessage: nil, reject: reject)
         })
@@ -1486,7 +1561,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
     public func initWirelessKeypad(keypadMac: String, lockMac: String, resolve: @escaping (NumberStringPair) -> Void, reject: @escaping (Double, String) -> Void) {
         TTWirelessKeypad.initializeKeypad(withKeypadMac: keypadMac, lockMac: lockMac) { wirelessKeypadFeatureValue, status, electricQuantity in
             if status.rawValue == TTKeypadStatusValue.TTKeypadSuccess {
-                resolve((Double(electricQuantity), wirelessKeypadFeatureValue ?? ""))
+                resolve(NumberStringPair(first: Double(electricQuantity), second: wirelessKeypadFeatureValue ?? ""))
             } else {
                 self.responseFail(.REMOTE_KEY_PAD, code: status, errorMessage: nil, reject: reject)
             }
