@@ -1,5 +1,6 @@
-import { NativeEventEmitter, NativeModules } from 'react-native';
+
 import { NitroModules } from 'react-native-nitro-modules';
+import type { AnyMap } from 'react-native-nitro-modules';
 import type { TtlockNitro } from './TtlockNitro.nitro';
 import type {
   InitGatewayParam,
@@ -42,10 +43,54 @@ import {
 const TtlockNitroHybridObject =
   NitroModules.createHybridObject<TtlockNitro>('TtlockNitro');
 
-// Use NativeEventEmitter with the native module for event data
-// The native module name is "Ttlock" as defined in the native code
-const ttLockModule = NativeModules.Ttlock;
-const ttLockEventEmitter = new NativeEventEmitter(ttLockModule);
+// Event emitter wrapper for nitro module events
+// Matches the nitro module interface: listener: (eventName: string, data: AnyMap | undefined) => void
+class NitroEventEmitter {
+  private listeners: Map<string, Set<(data: any) => void>> = new Map();
+  private nativeListeners: Map<
+    string,
+    (eventName: string, data: AnyMap | undefined) => void
+  > = new Map();
+
+  addListener(eventName: string, callback: (data: any) => void): { remove: () => void } {
+    if (!this.listeners.has(eventName)) {
+      this.listeners.set(eventName, new Set());
+      // Create native listener that matches nitro module signature
+      // Signature: (eventName: string, data: AnyMap | undefined) => void
+      const nativeListener = (eventName: string, data: AnyMap | undefined) => {
+        const callbacks = this.listeners.get(eventName);
+        if (callbacks) {
+          // Dispatch to all registered callbacks, passing only the data
+          callbacks.forEach((cb) => cb(data));
+        }
+      };
+      this.nativeListeners.set(eventName, nativeListener);
+      // Register with native module using the correct signature
+      TtlockNitroHybridObject.addListener(eventName, nativeListener);
+    }
+    this.listeners.get(eventName)!.add(callback);
+
+    return {
+      remove: () => {
+        const callbacks = this.listeners.get(eventName);
+        if (callbacks) {
+          callbacks.delete(callback);
+          if (callbacks.size === 0) {
+            // Remove native listener when no more callbacks exist
+            const nativeListener = this.nativeListeners.get(eventName);
+            if (nativeListener) {
+              TtlockNitroHybridObject.removeListener(eventName, nativeListener);
+              this.nativeListeners.delete(eventName);
+            }
+            this.listeners.delete(eventName);
+          }
+        }
+      },
+    };
+  }
+}
+
+const ttLockEventEmitter = new NitroEventEmitter();
 
 // Subscription map to track subscriptions
 const subscriptionMap = new Map<string, any>();
