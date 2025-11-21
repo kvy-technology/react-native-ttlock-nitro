@@ -415,7 +415,9 @@ export function controlLock(
       control,
       lockData,
       (data: NumberNumberNumberTriple) =>
-        resolve([data.first, data.second, data.third]),
+        {
+          resolve([data.first, data.second, data.third]);
+        },
       reject
     );
   });
