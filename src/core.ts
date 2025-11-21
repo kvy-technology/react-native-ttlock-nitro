@@ -347,6 +347,7 @@ export function startScan(
   }
   if (callback) {
     subscription = ttLockEventEmitter.addListener(eventName, (data: any) => {
+
       callback(data as ScanLockModal);
     });
     subscriptionMap.set(eventName, subscription);

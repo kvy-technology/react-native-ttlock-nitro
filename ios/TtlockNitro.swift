@@ -490,7 +490,18 @@ class TtlockNitro: HybridTtlockNitroSpec {
     private func sendEvent(_ eventName: String, body: Any?) {
         // Notify registered listeners
         if let eventListeners = listeners[eventName] {
-            let data = body as? AnyMap
+            let data: AnyMap?
+            if let dict = body as? [String: Any] {
+                // Create AnyMap from dictionary using the static factory method
+                // Convert [String: Any] to [String: Any?] for the fromDictionary method
+                let dictWithOptionals = dict.mapValues { $0 as Any? }
+                data = AnyMap.fromDictionaryIgnoreIncompatible(dictWithOptionals)
+            } else if let anyMap = body as? AnyMap {
+                data = anyMap
+            } else {
+                data = nil
+            }
+
             for listener in eventListeners {
                 listener(eventName, data)
             }
@@ -673,6 +684,7 @@ class TtlockNitro: HybridTtlockNitroSpec {
             data["lockSwitchState"] = model.lockSwitchState.rawValue
             data["rssi"] = model.rssi
             data["oneMeterRssi"] = model.oneMeterRSSI
+
             self.sendEvent(EVENT_SCAN_LOCK, body: data)
         }
     }
